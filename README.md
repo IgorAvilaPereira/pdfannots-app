@@ -27,6 +27,8 @@ The repository contains the following main files and folders:
 ## Run
 
 ```python
+cd src/
+pip3 install -r requirements.txt
 flet run
 ```
 
