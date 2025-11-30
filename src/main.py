@@ -1,10 +1,14 @@
 import subprocess
+import os
 
-from flet import Column, ElevatedButton, icons, FilePicker, Page, Ref, FilePickerResultEvent, Row, \
+from flet import Column, ElevatedButton, Icons, FilePicker, Page, Ref, FilePickerResultEvent, Row, \
     app, Container, padding, border_radius, \
     CrossAxisAlignment, ScrollMode, RadioGroup, Radio, Markdown, \
     MarkdownExtensionSet, AlertDialog, Text, TextButton, TextField, MainAxisAlignment
+
 from pdfannots.cli import main_igor
+
+import flet as ft
 
 
 def main(page: Page):
@@ -16,8 +20,6 @@ def main(page: Page):
     page.window_min_height = 210
 
     def request_preview(e):
-        # markdown = subprocess.run(["pdfannots", radio_group.value], capture_output=True)
-        # preview.current.value = str(markdown.stdout, 'UTF-8')
         preview.current.value = main_igor(radio_group.value)
         markdown_pane.width = 600
         markdown_pane.visible = True
@@ -27,38 +29,31 @@ def main(page: Page):
 
     path_export = Ref[TextField]()
 
-    def save_markdown(e):
+    def save_markdown(e, modal):
         with open(path_export.current.value, 'w') as markdown_file:
-            markdown_file.write(preview.current.value)
-        dlg_modal.open = False
+            markdown_file.write(preview.current.value)        
+        page.close(modal)
         page.update()
 
-    def close_modal(e):
-        dlg_modal.open = False
-        page.update()
-
-    dlg_modal = AlertDialog(
-        modal=True,
-        title=Text("Exporting annotations"),
-        content=Column([
-            Text("Do you want to save exported PDF annotations as markdown?"),
-            TextField(ref=path_export)]
-        ),
-        actions=[
-            TextButton("Save", on_click=save_markdown),
-            TextButton("Close", on_click=close_modal)
-        ],
-        actions_alignment=MainAxisAlignment.END,
-    )
-
+    
     def export_markdown(e):
-        path_export.current.value = radio_group.value.replace(".pdf", ".md")
-        path_export.current.label = "Path Markdown File"
-        page.dialog = dlg_modal
-        dlg_modal.open = True
-        page.update()
+        print("oi")
+        dlg_modal = AlertDialog(
+                modal=True,
+                title=Text("Exporting annotations"),
+                content=Column([
+                    Text("Do you want to save exported PDF annotations as markdown?"),
+                    TextField(value=os.path.expanduser("~")+"/export.md", ref=path_export)]
+                ),
+                actions=[
+                    TextButton("Save", on_click=lambda e: save_markdown(e, dlg_modal)),
+                    TextButton("Close", on_click=lambda e: page.close(dlg_modal))
+                ],
+                on_dismiss=lambda e: print("Fechando PopUp!"),
+                actions_alignment=MainAxisAlignment.END,
+        )
+        page.open(dlg_modal)
 
-    preview_button = Ref[ElevatedButton]()
     export_button = Ref[ElevatedButton]()
     menu = Container(
         bgcolor="#E8EFF8",
@@ -69,21 +64,14 @@ def main(page: Page):
             controls=[
                 ElevatedButton(
                     "Select files...",
-                    icon=icons.FOLDER_OPEN,
+                    icon=Icons.FOLDER_OPEN,
                     on_click=lambda _: file_picker.pick_files(allow_multiple=True, allowed_extensions=['pdf']),
                 ),
                 ElevatedButton(
-                    "Preview",
-                    icon=icons.PREVIEW,
-                    ref=preview_button,
-                    on_click=request_preview,
-                    disabled=True,
-                ),
-                ElevatedButton(
                     "Export",
-                    icon=icons.IMPORT_EXPORT,
+                    icon=Icons.IMPORT_EXPORT,
                     ref=export_button,
-                    on_click=export_markdown,
+                    on_click=lambda e: export_markdown(e),
                     disabled=True,
                 ),
             ]
@@ -91,7 +79,7 @@ def main(page: Page):
     )
 
     files = Ref[Column]()
-    radio_group = RadioGroup(content=Column(ref=files))
+    radio_group = RadioGroup(content=Column(ref=files), on_change=lambda e: request_preview(e))
     preview = Ref[Markdown]()
 
     pdf_list = Container(
@@ -120,7 +108,7 @@ def main(page: Page):
 
     def file_picker_result(e: FilePickerResultEvent):
         pdf_list.visible = False if e.files is None else True
-        preview_button.current.disabled = True if e.files is None else False
+        # preview_button.current.disabled = True if e.files is None else False
         export_button.current.disabled = True if e.files is None else False
         if e.files is not None:
             pdf_list.width = 300
@@ -151,7 +139,4 @@ def main(page: Page):
             ]
         )
     )
-
-
-if __name__ == "__main__":
-    app(target=main)
+ft.app(main)
