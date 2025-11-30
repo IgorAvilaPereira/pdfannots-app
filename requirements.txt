@@ -1,4 +1,5 @@
 # pip requirements for pdfannots-app
+# pip3 install -r requirements.txt
 flet==0.28.3
 pdfminer.six==20221105
 setuptools==80.9.0
