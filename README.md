@@ -24,6 +24,12 @@ The repository contains the following main files and folders:
 * `README.md`: Project documentation.
 * `requirements.txt`: List of project dependencies.
 
+## Run
+
+```python
+flet run
+```
+
 ### 🚀 How to Contribute
 
 To contribute to the project, you can:
